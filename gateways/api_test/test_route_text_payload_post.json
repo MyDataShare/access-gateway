@@ -1,0 +1,15 @@
+{
+    "route": {
+        "path": "/test_route_text_payload_post",
+        "method": "POST"
+    },
+    "response": {
+        "status": 200,
+        "headers": {
+            "content_type": "application/json"
+        },
+        "json": {
+            "text": "${route.text}"
+        }
+    }
+}

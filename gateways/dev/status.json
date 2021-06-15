@@ -1,0 +1,21 @@
+{
+    "route": {
+        "path": "/status",
+        "method": "GET"
+    },
+    "requests": [
+        {
+            "url": "http://localhost:19190/status",
+            "method": "GET"
+        }
+    ],
+    "response": {
+        "status": 200,
+        "headers": {
+            "content_type": "application/json"
+        },
+        "json": {
+            "status": "${requests[0].response.json.status}"
+        }
+    }
+}

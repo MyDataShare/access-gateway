@@ -1,0 +1,22 @@
+{
+    "route": {
+        "path": "/test_route_query_post",
+        "method": "POST"
+    },
+    "response": {
+        "status": 200,
+        "headers": {
+            "content_type": "application/json"
+        },
+        "json": {
+            "testquery": "${route.query.testquery}",
+            "testquery2": "${route.query.testquery2}"
+        },
+        "generators": [
+            {
+                "generator": "generators.copy",
+                "from": "route.query", "to": "response.json.query"
+            }
+        ]
+    }
+}

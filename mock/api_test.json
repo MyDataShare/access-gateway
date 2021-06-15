@@ -1,0 +1,14 @@
+{
+    "GET": {
+        "/status": [
+            {
+                "id": "status",
+                "return": {
+                    "json": {
+                        "status": "ok"
+                    }
+                }
+            }
+        ]
+    }
+}

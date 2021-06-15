@@ -1,0 +1,24 @@
+
+ {
+    "basic_token": {
+        "token_type": "basic",
+        "client_id": "QWE_ZXC",
+        "secret": "${AGW_TEST_BASIC_SECRET}"
+    },
+    "foo_token": {
+        "module": "oauth",
+        "token_type": "bearer",
+        "openid_configuration": "http://idpmock:19090/.well-known/openid-configuration",
+        "grant_method": "basic",
+        "client_id": "ASD_QWE",
+        "secret": "${AGW_TEST_SECRET}"
+    },
+    "bar_token": {
+        "module": "oauth",
+        "token_type": "bearer",
+        "openid_configuration": "http://idpmock:19090/.well-known/openid-configuration",
+        "grant_method": "password",
+        "username": "kalle",
+        "password": "${AGW_KALLE_PASSWORD}"
+    }
+}

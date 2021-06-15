@@ -1,0 +1,22 @@
+{
+    "route": {
+        "path": "/test_route_json_payload_patch",
+        "method": "PATCH"
+    },
+    "response": {
+        "status": 200,
+        "headers": {
+            "content_type": "application/json"
+        },
+        "json": {
+            "teststring": "${route.json.teststring}",
+            "teststring2": "${route.json.teststring2}"
+        },
+        "generators": [
+            {
+                "generator": "generators.copy",
+                "from": "route.json", "to": "response.json.json"
+            }
+        ]
+    }
+}

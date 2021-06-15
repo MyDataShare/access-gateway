@@ -1,0 +1,32 @@
+version: "3.0"
+
+services:
+
+    agw:
+        build:
+            context: ./
+            dockerfile: ./docker/Dockerfile
+        env_file:
+            - .env
+        environment:
+            AGW_GATEWAYS_SEARCH_PATH: ${AGW_GATEWAYS_SEARCH_PATH}
+            MOCK_DP_ROUTES: ${MOCK_DP_ROUTES}
+        ports:
+            - 8199:8199 # nginx
+            - 8171:8171 # gunicorn
+        volumes:
+            - ./agw:/app/agw
+            - ./gateways:/app/gateways
+            - ./mock:/app/mock
+
+    mock_dp:
+        build:
+            context: ./mock
+            dockerfile: ./Dockerfile
+        environment:
+            MOCK_DP_PORT: 19190
+            MOCK_DP_ROUTES: mock_dp.json
+        ports:
+            - 19190:19190
+        volumes:
+            - ./mock:/mock

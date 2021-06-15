@@ -1,0 +1,17 @@
+{
+    "route": {
+        "path": "/test_route_dynamic_get/<dynamic_int:int>/<dynamic_float:float>/<dynamic_path:path>",
+        "method": "GET"
+    },
+    "response": {
+        "status": 200,
+        "headers": {
+            "content_type": "application/json"
+        },
+        "json": {
+            "dynamic_int": "${route.dynamic.dynamic_int}",
+            "dynamic_float": "${route.dynamic.dynamic_float}",
+            "dynamic_path": "${route.dynamic.dynamic_path}"
+        }
+    }
+}

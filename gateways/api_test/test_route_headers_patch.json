@@ -1,0 +1,26 @@
+{
+    "route": {
+        "path": "/test_route_headers_patch",
+        "method": "PATCH"
+    },
+    "response": {
+        "status": 200,
+        "headers": {
+            "content_type": "application/json"
+        },
+        "json": {
+            "Testheader": "${route.headers.Testheader}",
+            "Test-Header-With-Dashes": "${route.headers.Test-Header-With-Dashes}"
+        },
+        "generators": [
+            {
+                "generator": "generators.copy",
+                "from": "route.headers", "to": "response.headers"
+            },
+            {
+                "generator": "generators.copy",
+                "from": "route.headers", "to": "response.json.all_headers"
+            }
+        ]
+    }
+}

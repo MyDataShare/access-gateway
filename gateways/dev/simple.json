@@ -1,0 +1,88 @@
+{
+    "route": {
+        "path": "/foo/simple/<baz>",
+        "method": "POST",
+        "plugins": [
+            { "plugin": "plugins.mop_request_ticket_validation" }
+        ]
+    },
+    "requests": [
+        {
+            "builders": [
+                {
+                    "builder": "builders.copy",
+                    "from": "route.headers.Mydatashare-Request-Ticket",
+                    "to": "requests[0].headers.request_ticket"
+                }
+            ],
+            "url": "http://mock_dp:19190/foo?muumi=pappa&muumi=mamma",
+            "method": "POST",
+            "headers": {
+                "foo": "bar ${route.headers.Foo}",
+                "laalaa": "lol ${route.query.kissa}"
+            },
+            "json": {
+                "hevoinen": "${route.dynamic.baz}"
+            }
+        },
+        {
+            "url": "http://mock_dp:19190/bar?loiloi=${requests[0].response.json.loiloi}",
+            "method": "GET",
+            "headers": {
+                "faa": "bar ${route.headers.Faa}"
+            }
+        },
+        {
+            "builders": [
+                {
+                    "builder": "builders.copy",
+                    "from": "route.extra.mop_request_ticket_validation.identifiers",
+                    "to": "requests[2].json.identifiers"
+                }
+            ],
+            "url": "http://mock_dp:19190/xml",
+            "method": "POST",
+            "json": {
+                "test": "test1",
+                "FIN_ssn": "${route.extra.mop_request_ticket_validation.identifiers.ssn.FIN}",
+                "email": "${route.extra.mop_request_ticket_validation.identifiers.email[0]}"
+            },
+            "processors": [
+                { "processor": "processors.xml_to_json" }
+            ]
+        }
+    ],
+    "response": {
+        "status": 200,
+        "headers": {
+            "content_type": "application/json"
+        },
+        "json": {
+            "foo": "bar ${requests[0].response.json.laalaa}",
+            "allow": "${requests[0].response.headers.Access-Control-Allow-Headers}",
+            "foobar": "resp1 ${requests[1].response.json.foobar}"
+        },
+        "generators": [
+            {
+                "generator": "generators.set",
+                "response.status": 201,
+                "response.json.from_setter": "yay"
+            },
+            {
+                "generator": "generators.copy",
+                "from": "requests[0].response.json", "to": "response.json.from_copy"
+            },
+            {
+                "generator": "generators.delete",
+                "key": "response.json.from_copy.laalaa"
+            },
+            {
+                "generator": "generators.copy",
+                "from": "requests[2].response.json", "to": "response.json.xml_to_json"
+            }
+        ]
+    },
+    "after_hooks": [
+        { "after_hook": "after_hooks.patch_mop_access_item" }
+    ]
+}

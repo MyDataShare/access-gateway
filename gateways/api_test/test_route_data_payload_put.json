@@ -1,0 +1,22 @@
+{
+    "route": {
+        "path": "/test_route_data_payload_put",
+        "method": "PUT"
+    },
+    "response": {
+        "status": 200,
+        "headers": {
+            "content_type": "application/json"
+        },
+        "json": {
+            "teststring": "${route.data.teststring}",
+            "teststring2": "${route.data.teststring2}"
+        },
+        "generators": [
+            {
+                "generator": "generators.copy",
+                "from": "route.data", "to": "response.json.data"
+            }
+        ]
+    }
+}

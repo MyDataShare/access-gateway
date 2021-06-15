@@ -1,0 +1,15 @@
+{
+    "route": {
+        "path": "/test_route_text_payload_patch",
+        "method": "PATCH"
+    },
+    "response": {
+        "status": 200,
+        "headers": {
+            "content_type": "application/json"
+        },
+        "json": {
+            "text": "${route.text}"
+        }
+    }
+}

@@ -1,0 +1,102 @@
+{
+    "GET": {
+        "/status": [
+            {
+                "id": "status",
+                "return": {
+                    "json": {
+                        "status": "ok"
+                    }
+                }
+            }
+        ],
+        "/bar": [
+            {
+                "id": "basic",
+                "query": {
+                    "loiloi": ["Loiloi is best"]
+                },
+                "return": {
+                    "json": {
+                        "foobar": "this is foobar"
+                    }
+                }
+            }
+        ]
+    },
+
+    "POST" : {
+        "/foo": [
+            {
+                "id": "with_json",
+                "headers": {
+                    "content-type": "application/json"
+                },
+                "json": {
+                    "hevoinen": "apina"
+                },
+                "return": {
+                    "json": {
+                        "laalaa": "This is laalaa",
+                        "loiloi": "Loiloi is best"
+                    }
+                }
+            },
+            {
+                "id": "with_query_and_json",
+                "headers": {
+                    "content-type": "application/json"
+                },
+                "query": {
+                    "muumi": [ "pappa", "mamma" ]
+                },
+                "json": {
+                    "hevoinen": "apina"
+                },
+                "return": {
+                    "text": "JSON kissa"
+                }
+            },
+            {
+                "id": "with_query_and_data",
+                "headers": {
+                    "content-type": "application/x-www-form-urlencoded"
+                },
+                "query": {
+                    "kissa": [ "koira" ]
+                },
+                "data": {
+                    "hevoinen": [ "apina" ]
+                },
+                "return": {
+                    "text": "DATA kissa"
+                }
+            },
+
+            {
+                "id": "with_data",
+                "headers": {
+                    "content-type": "application/x-www-form-urlencoded"
+                },
+                "data": {
+                    "hevoinen": [ "apinaa" ]
+                },
+                "return": {
+                    "json": {
+                        "laalaa": "DATA kissa 2"
+                    }
+                }
+            }
+        ],
+        "/xml": [
+            {
+                "id": "xml",
+                "skip": ["json"],
+                "return": {
+                    "content_type": "application/xml",
+                    "text": "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?><kehys><yleinen><sanomatyyppi>TPSUOTIEDOTKORTTIHAKUOUT</sanomatyyppi><erakoodi>0</erakoodi><sekvenssinumero>0</sekvenssinumero><sovellus>TPSUO</sovellus><ymparisto>ATEENA,ATEENA</ymparisto></yleinen><sanoma><ktp><ajokorttiluokanTiedot><ajokorttiluokkatieto><hetu>191278-3456</hetu><sukunimi>Iso-Ilomäki</sukunimi><etunimet>Tero Erkki Aulis</etunimet><ajokorttiluokka>BE CE</ajokorttiluokka><ajokortinMyontamisPvm>2000-03-03</ajokortinMyontamisPvm><ajooikeusluokat><ajooikeusluokka><ajooikeusluokka>BE</ajooikeusluokka><alkamispvm>2000-03-03</alkamispvm></ajooikeusluokka><ajooikeusluokka><ajooikeusluokka>CE</ajooikeusluokka><alkamispvm>2000-03-03</alkamispvm></ajooikeusluokka><ajooikeusluokka><ajooikeusluokka>C</ajooikeusluokka><alkamispvm>1997-07-21</alkamispvm></ajooikeusluokka><ajooikeusluokka><ajooikeusluokka>B</ajooikeusluokka><alkamispvm>1997-05-15</alkamispvm></ajooikeusluokka></ajooikeusluokat><viimeisinajooikeus><ajooikeusluokka><ajooikeusluokka>AM/120</ajooikeusluokka><alkamispvm>1997-05-15</alkamispvm></ajooikeusluokka><ajooikeusluokka><ajooikeusluokka>AM/121</ajooikeusluokka><alkamispvm>1997-05-15</alkamispvm></ajooikeusluokka><ajooikeusluokka><ajooikeusluokka>B</ajooikeusluokka><alkamispvm>1997-05-15</alkamispvm></ajooikeusluokka><ajooikeusluokka><ajooikeusluokka>T</ajooikeusluokka><alkamispvm>1997-05-15</alkamispvm></ajooikeusluokka><ajooikeusluokka><ajooikeusluokka>C</ajooikeusluokka><alkamispvm>1997-07-21</alkamispvm></ajooikeusluokka><ajooikeusluokka><ajooikeusluokka>C1</ajooikeusluokka><alkamispvm>1997-07-21</alkamispvm></ajooikeusluokka><ajooikeusluokka><ajooikeusluokka>LT</ajooikeusluokka><alkamispvm>1997-07-21</alkamispvm></ajooikeusluokka><ajooikeusluokka><ajooikeusluokka>BE</ajooikeusluokka><alkamispvm>2000-03-03</alkamispvm></ajooikeusluokka><ajooikeusluokka><ajooikeusluokka>C1E</ajooikeusluokka><alkamispvm>2000-03-03</alkamispvm></ajooikeusluokka><ajooikeusluokka><ajooikeusluokka>CE</ajooikeusluokka><alkamispvm>2000-03-03</alkamispvm></ajooikeusluokka></viimeisinajooikeus><ammattipatevyydet><ammattipatevyys><ammattipatevyydenAlkamispvm>2013-05-27</ammattipatevyydenAlkamispvm><adrAlkamispvm>2013-11-11</adrAlkamispvm><ammattipatevyydenLajit>TA</ammattipatevyydenLajit></ammattipatevyys></ammattipatevyydet></ajokorttiluokkatieto></ajokorttiluokanTiedot></ktp></sanoma></kehys>"
+                }
+            }
+        ]
+    }
+}
