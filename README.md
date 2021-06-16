@@ -1,16 +1,16 @@
 # MyDataShare Access Gateway
 
-Access Gateway (hereafter, for brevity: AGW) is a general purpose extendable API gateway developed originally for MyDataShare to shield and protect the data providing services but is not limited to be used within the MyDataShare ecosystem. However, most of this document focuses on using MyDataShare Access Gateway as part of MyDataShare ecosystem.
+Access Gateway (hereafter, for brevity: AGW) is a general purpose extendable API gateway developed originally for [MyDataShare](https://www.mydatashare.com/) MyData operator platform to shield and protect the data providing services but is not limited to be used within the MyDataShare ecosystem. Vastuu Group wants through open sourcing the code as a baseline/reference implementation of the MIM4 Connector function to invite vendors and developers to build and extend on it and simultanously to create multi-vendor interoperability between MyData operators with heterogenous product realizations. However, most of this document focuses on using MyDataShare Access Gateway as part of MyDataShare ('MDS') ecosystem. The MIM4 Connector specific configuration and use of AGW will be documented in detail as the MIM4 project evolves forward. The latest on MIM4 Connectivity Specification and the Connector can be found [here](https://www.mydatashare.com/oasc-mim4-specification).
 
-The main feature of AGW is to help customers easily protect their data provider services. AGW acts as a shield atop the data provider service and introspects inbound requests for validity.
+The main feature of AGW is to help customers easily protect their data provider (MyData term: data source) services. AGW acts as a shield atop the data provider service and introspects inbound requests from data consumers (MyData term: data using service) for validity.
 
 Please refer to ([MyDataShare Developer Guide](https://kampanja.vastuugroup.fi/hubfs/developer-guide.pdf) and [MyDataShare API Reference](https://app.swaggerhub.com/apis/MyDataShare2/MyDataShare/)) for additional information about the product.
 
 ## Hosting alternatives
 
-AGW can be hosted in two modes.
+as part of MyDataShare ecosystem the AGW can be hosted in two modes.
 
-- A customer may utilize an operator-provided AGW instance (SaaS-licensing).
+- A customer may utilize an operator-provided AGW instance (SaaS licensing).
 - A customer may elect to host their own AGW instance (self-hosting).
 
 Additionally, during development and configuration of AGW an instance of it is trivially hostable on developer's own workstation.
@@ -19,7 +19,7 @@ A developer may use it with an appropriate MyDataShare environment (beta or stag
 
 ## Getting started
 
-Developers can experiment with an entirely independent instance of an AGW (that does not validate requests using a MyData operator).
+Developers can experiment with an entirely independent instance of an AGW (that does not validate requests using MyDataShare-based operator).
 
 Docker-compose is used to manage the execution environment.
 
@@ -33,7 +33,7 @@ docker-compose up mock_dp agw
 
 ## Deployment
 
-However, in order to utilize an AGW with an operator backend (i.e. MDS), the operator administrator (i.e. using the admin-scope) is needed to perform the following tasks:
+However, in order to utilize an AGW with an operator backend (i.e. MyDataShare), the operator administrator (i.e. using the admin-scope) is needed to perform the following tasks:
 
 - Create the AGW client in the identity provider.
 - Create the client_id object.
@@ -81,7 +81,7 @@ AGW promotes **configuration over code**, and thus request management within AGW
 
 The configuration files are in JSON-format and covered in detail below.
 
-The utilization of the AGW generates log entries (for introspection result and for the actual retrieval of data) that are visible to the data subject and the data provider's organization using the API provided by the MDS backend (each long entry is available as an access_item object). These log entries are not available if the AGW instance does not utilize a MDS backend for introspection.
+The utilization of the AGW generates log entries (for introspection result and for the actual retrieval of data) that are visible to the Data Subject and the data provider's organization using the API provided by the MyDataShare backend (each long entry is available as an access_item object). These log entries are not available if the AGW instance does not utilize a MDS backend for introspection.
 
 ### Introspection flow
 
@@ -231,7 +231,7 @@ As noted, an AGW is located atop a data provider.
 
 For convenience's sake, a simple ready-to-use data provider is available with the AGW, in `agw/mock`-directory.
 
-As with AGW itself, the data provider is implemented with configuration over code-principle, with the routes to be defined as JSON objects.
+As with AGW itself, the data provider is implemented with configuration over code -principle, with the routes to be defined as JSON objects.
 
 ### Testing
 
