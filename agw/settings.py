@@ -32,6 +32,7 @@ def get_setting(setting_name: str, default: Any = None, secret: bool = False) ->
 
 
 GATEWAYS_SEARCH_PATH: str = get_required_setting('GATEWAYS_SEARCH_PATH')
+INCLUDES_SEARCH_PATH: str = get_setting('INCLUDES_SEARCH_PATH')
 
 LOGGING_LEVEL: str = get_setting('LOGGING_LEVEL', 'INFO')
 LOGGING_COLOR: bool = True if get_setting('LOGGING_COLOR', 'true').lower() in ('true', 'y', 'yes') else False

@@ -1,3 +1,4 @@
+import os
 import base64
 import json
 from pathlib import Path
@@ -16,3 +17,14 @@ def decode_base64(input_str: str) -> str:
 def read_json(directory: Path, filename: str):
     with open(directory.joinpath(filename)) as f:
         return json.load(f)
+
+
+def walk_dir(directory: str, callback, ending_with=None):
+    for subdir, dirs, files in os.walk(directory):
+        for filename in files:
+            filepath = subdir + os.sep + filename
+
+            if ending_with and not filepath.endswith(ending_with):
+                continue
+
+            callback(filepath, filename)

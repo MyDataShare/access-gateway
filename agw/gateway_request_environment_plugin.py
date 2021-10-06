@@ -1,5 +1,5 @@
 import numbers
-from typing import Optional, List, Any, Tuple, Dict
+from typing import Optional, List, Any, Tuple, Dict, Union
 import re
 from copy import deepcopy
 
@@ -19,25 +19,61 @@ ll = getLogger("agw." + __name__)
 class GatewayRequestEnvironment:
     def __init__(
         self,
+        constants: dict,
         route: AGWRoute,
         requests: Optional[List[AGWRequest]] = None,
         response: Optional[AGWResponse] = None,
         after_hooks: Optional[List[Dict]] = None,
         error: Optional[str] = None
     ) -> None:
+        self.constants = constants
         self.route = route
         self.requests = requests if requests else []
         self.response = response
         self.after_hooks = after_hooks
         self.error = error
 
+        self.requests_by_name: Dict[str, AGWRequest] = {}
+
     def evaluate_and_add_request(self, agw_request: AGWRequest):
+
+        # Handle includes
+        if agw_request.includes:
+            for incl in agw_request.includes:
+                self.arguments = {}
+                if 'arguments' in incl:
+                    self.arguments = incl['arguments']
+                    self._evaluate_variables(incl['include'])
+                    for key, val in incl['include'].items():
+                        setattr(agw_request, key, val)
+                    del incl['include']
+
         self._evaluate_variables(agw_request)
         self.requests.append(agw_request)
+        if agw_request.name:
+            self.requests_by_name[agw_request.name] = agw_request
 
     def evaluate_and_add_response(self, agw_response: AGWResponse):
         self._evaluate_variables(agw_response)
         self.response = agw_response
+
+    @staticmethod
+    def _split_gre_key(key: str):
+        parts = []
+        pos = 0
+        open_sq_brackets = 0
+        for i, c in enumerate(key):
+            if c == '.' and open_sq_brackets == 0:
+                parts.append(key[pos:i])
+                pos = i + 1
+            elif c == '[':
+                open_sq_brackets += 1
+            elif c == ']':
+                open_sq_brackets -= 1
+                if open_sq_brackets < 0:
+                    raise ValueError(f"Syntax error {key}")
+        parts.append(key[pos:])
+        return parts
 
     def _get_node(self, key: str, create_path: bool = False) -> Tuple[Any, Any]:
         """
@@ -53,18 +89,28 @@ class GatewayRequestEnvironment:
         :raises IndexError: If a list index in given key was out of range.
         :raises ValueError: If the given key is not properly formed.
         """
-        parts = key.split('.')
+
+        parts = self._split_gre_key(key)
+
         gre_node: Any = self
         for part_index, part in enumerate(parts):
             is_last_part = part_index == len(parts) - 1
-            index = None
+            index_or_key: Optional[Union[str, int]] = None
             p = part
             if p[-1] == ']':
                 subparts = p.split('[')
                 if len(subparts) != 2:
                     raise ValueError(f"Env array notation failed for {part} (from: {key})")
                 p = subparts[0]
-                index = int(subparts[1][0:-1])
+                iok = subparts[1][0:-1]
+                if iok.isdigit():
+                    index_or_key = int(iok)
+                elif iok[0] in ('"', "'"):
+                    if iok[-1] not in ('"', "'"):
+                        raise ValueError(f"Env dict notation failed for {part} (from: {key})")
+                    index_or_key = iok[1:-1]
+                else:
+                    index_or_key = self.get(iok)
 
             if isinstance(gre_node, dict) or isinstance(gre_node, CaseInsensitiveDict):
                 # Current node is a dict
@@ -74,15 +120,15 @@ class GatewayRequestEnvironment:
                         # If create_path is True and next key is not the last one, create the next key
                         if not is_last_part:
                             gre_node[p] = {}
-                        elif is_last_part and index is not None:
-                            raise KeyError(f"Env does not contain '{part}' (from: {key})")
+                        elif is_last_part and index_or_key is not None:
+                            raise KeyError(f"Env does not contain '{part}' (from: {key}) (1)")
                     else:
-                        raise KeyError(f"Env does not contain '{part}' (from: {key})")
+                        raise KeyError(f"Env does not contain '{part}' (from: {key}) (2)")
 
                 # If this is the last key, return current node and the key (regardless if the key exists)
                 if is_last_part:
-                    if index is not None:
-                        return gre_node[p], index
+                    if index_or_key is not None:
+                        return gre_node[p], index_or_key
                     return gre_node, p
                 gre_node = gre_node[p]
 
@@ -91,21 +137,29 @@ class GatewayRequestEnvironment:
                 if not hasattr(gre_node, p) and not is_last_part:
                     # We cannot create this types of objects dynamically, they should be present already so an error
                     # is raised always if not found.
-                    raise KeyError(f"Env does not contain '{part}' (from: {key})")
+                    raise KeyError(f"Env does not contain '{part}' (from: {key}) (3)")
 
                 if is_last_part:
                     return gre_node, p
                 gre_node = getattr(gre_node, p)
 
-            if index is not None:
-                # Current node is a list (can be a list of AGWRequest)
-                if not isinstance(gre_node, list):
-                    raise KeyError(f"Env '{part}' is not a list (from: {key})")
-                if is_last_part:
-                    return gre_node, index
-                if len(gre_node) <= index:
-                    raise IndexError(f"Env '{part}' list index out of range (from: {key})")
-                gre_node = gre_node[index]
+            if index_or_key is not None:
+                if isinstance(index_or_key, int):
+                    # Current node is a list (can be a list of AGWRequest)
+                    if not isinstance(gre_node, list):
+                        raise KeyError(f"Env '{part}' is not a list (from: {key})")
+                    if is_last_part:
+                        return gre_node, index_or_key
+                    if len(gre_node) <= index_or_key:
+                        raise IndexError(f"Env '{part}' list index out of range (from: {key})")
+                    gre_node = gre_node[index_or_key]
+                else:
+                    # Current node is a dict
+                    if not isinstance(gre_node, dict):
+                        raise KeyError(f"Env '{part}' is not a dict (from: {key})")
+                    if index_or_key not in gre_node:
+                        raise KeyError(f"Env '{p}' does not contain {index_or_key} (from: {key}) (4)")
+                    gre_node = gre_node[index_or_key]
 
         raise KeyError(f'Env {key} not found')
 
@@ -202,7 +256,8 @@ def multiDict_to_dict(multidict):
 
 
 class GatewayRequestEnvironmentPlugin:
-    def __init__(self, route_definition: AGWRouteDefinition, after_hooks: Dict):
+    def __init__(self, constants: dict, route_definition: AGWRouteDefinition, after_hooks: Dict):
+        self.constants = constants
         self.route_definition = route_definition
         self.after_hooks = after_hooks
 
@@ -216,6 +271,7 @@ class GatewayRequestEnvironmentPlugin:
             agw_route.json = request.json if request.json else None
             agw_route.data = multiDict_to_dict(request.forms)
             gre = GatewayRequestEnvironment(
+                self.constants,
                 agw_route,
                 after_hooks=deepcopy(self.after_hooks)  # type: ignore
             )

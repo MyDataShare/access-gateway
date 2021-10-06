@@ -4,7 +4,7 @@ from xml.parsers.expat import ExpatError
 
 from mds_logging import getLogger, timed
 from gateway_request_environment_plugin import GatewayRequestEnvironment
-from agw_request import AGWRequest
+from agw_request import AGWRequestResponse
 from service_exception_handler_plugin import InternalError
 
 ll = getLogger("agw." + __name__)
@@ -15,9 +15,10 @@ class XmlToJson:
         pass
 
     @timed
-    def run(self, gre: GatewayRequestEnvironment, request: AGWRequest) -> None:
+    def run(self, gre: GatewayRequestEnvironment, self_key: str) -> None:
         try:
-            request.response.json = parse(request.response.text)
+            response: AGWRequestResponse = gre.get(f"{self_key}.response")
+            response.json = parse(response.text)
         except ExpatError as e:
             raise InternalError(f"Error with XML response: {str(e)}")
 

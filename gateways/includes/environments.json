@@ -1,0 +1,16 @@
+{
+    "environments": {
+        "dev": {
+            "idp": "http://idpmock:19090",
+            "mop": "http://mydatashare:8071"
+        },
+        "alpha": {
+            "idp": "https://gluu.alpha.eks.mydatashare.com",
+            "mop": "https://data-operator.alpha.eks.mydatashare.com"
+        },
+        "beta": {
+            "idp": "https://gluu.beta.eks.mydatashare.com",
+            "mop": "https://api.beta.eks.mydatashare.com"
+        }
+    }
+}

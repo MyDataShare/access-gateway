@@ -64,7 +64,7 @@ class TestGetFromRequest(TestCase):
         self.agw_request_1 = agw_request.AGWRequest(agw_request.AGWRequestDefinition(**REQUEST_DEF_1))
         self.agw_request_2 = agw_request.AGWRequest(agw_request.AGWRequestDefinition(**REQUEST_DEF_2))
         self.agw_response = agw_response.AGWResponse(agw_response.AGWResponseDefinition(**RESPONSE_DEF))
-        self.gre = GatewayRequestEnvironment(self.agw_route, requests=[self.agw_request_1, self.agw_request_2],
+        self.gre = GatewayRequestEnvironment({}, self.agw_route, requests=[self.agw_request_1, self.agw_request_2],
                                              response=self.agw_response)
 
     def test_top_level_first(self):
@@ -124,7 +124,7 @@ class TestSetToResponse(TestCase):
         self.agw_request_1 = agw_request.AGWRequest(agw_request.AGWRequestDefinition(**REQUEST_DEF_1))
         self.agw_request_2 = agw_request.AGWRequest(agw_request.AGWRequestDefinition(**REQUEST_DEF_2))
         self.agw_response = agw_response.AGWResponse(agw_response.AGWResponseDefinition(**RESPONSE_DEF))
-        self.gre = GatewayRequestEnvironment(self.agw_route, requests=[self.agw_request_1, self.agw_request_2],
+        self.gre = GatewayRequestEnvironment({}, self.agw_route, requests=[self.agw_request_1, self.agw_request_2],
                                              response=self.agw_response)
 
     def test_set_top_level(self):
@@ -162,7 +162,7 @@ class TestPopFromResponse(TestCase):
         self.agw_request_1 = agw_request.AGWRequest(agw_request.AGWRequestDefinition(**REQUEST_DEF_1))
         self.agw_request_2 = agw_request.AGWRequest(agw_request.AGWRequestDefinition(**REQUEST_DEF_2))
         self.agw_response = agw_response.AGWResponse(agw_response.AGWResponseDefinition(**RESPONSE_DEF))
-        self.gre = GatewayRequestEnvironment(self.agw_route, requests=[self.agw_request_1, self.agw_request_2],
+        self.gre = GatewayRequestEnvironment({}, self.agw_route, requests=[self.agw_request_1, self.agw_request_2],
                                              response=self.agw_response)
 
     def test_list(self):

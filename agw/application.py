@@ -4,12 +4,14 @@ import time
 import math
 import random  # nosec
 import bottle
+import json
 
 import mds_logging
 import settings
 from gateway_controller import GatewayController
 from after_hooks import get_after_hook
 from gateway_request_environment_plugin import GatewayRequestEnvironment
+from util import walk_dir
 
 ll: mds_logging.MdsLogger = logging.getLogger("agw")
 
@@ -22,7 +24,10 @@ class AGW:
         ll.test_logger()
         settings.log_settings(ll.info)
 
+        self.includes = {}
+
         self.initialize_bottle()
+        self.read_includes()
         self.initialize_routes()
 
     def initialize_bottle(self):
@@ -30,6 +35,24 @@ class AGW:
 
         self.app.add_hook('before_request', before_request)
         self.app.add_hook('after_request', after_request)
+
+    def read_includes(self):
+        ll.info("Reading includes:")
+
+        if not settings.INCLUDES_SEARCH_PATH:
+            ll.info("  * Includes search path not set")
+            return
+
+        def read_include(path, name):
+            try:
+                ll.info(f"  * Reading include file: '{path}'")
+                include = json.load(open(path, "r", encoding='utf-8'))
+                self.includes[name] = include
+            except json.decoder.JSONDecodeError as e:
+                ll.error(f"Parsing include file '{path}' failed: {e}")
+                return
+
+        walk_dir(settings.INCLUDES_SEARCH_PATH, read_include)
 
     def initialize_routes(self):
         ll.info("Initializing routes:")
@@ -41,7 +64,7 @@ class AGW:
                 if not filepath.endswith(".json"):
                     continue
 
-                controller = GatewayController(filepath)
+                controller = GatewayController(filepath, self.includes)
                 for route in controller.get_routes():
                     ll.info(f"  * Adding route: {route['method']} {route['path']}")
                     self.app.route(**route)

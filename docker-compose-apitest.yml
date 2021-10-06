@@ -10,6 +10,7 @@ services:
             - .env
         environment:
             AGW_GATEWAYS_SEARCH_PATH: gateways/api_test
+            AGW_INCLUDES_SEARCH_PATH: gateways/includes
             MOCK_DP_ROUTES: mock/api_test.json
         ports:
             - 28199:8199 # nginx

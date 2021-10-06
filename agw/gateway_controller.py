@@ -2,7 +2,7 @@ import json
 import requests
 from copy import deepcopy
 from urllib.parse import parse_qs, urlencode
-from typing import List
+from typing import List, Optional, Dict
 
 from bottle import response
 
@@ -23,37 +23,58 @@ ll = getLogger("agw." + __name__)
 
 class GatewayController(object):
 
-    def __init__(self, definition_filepath: str):
+    def __init__(self, definition_filepath: str, includes: Optional[Dict] = None):
         self.definition_filepath = definition_filepath
+        self.includes = includes
+        self._read_definition()
+
+    def _read_definition(self):
+        ll.debug(f"Reading gateway definition: {self.definition_filepath}")
         try:
-            gateway_definition = json.load(open(definition_filepath, "r", encoding='utf-8'))
+            gateway_definition = json.load(open(self.definition_filepath, "r", encoding='utf-8'))
         except json.decoder.JSONDecodeError as e:
-            ll.error(f"Parsing gateway definition '{definition_filepath}' failed: {e}")
-            return
+            raise InternalError(f"Parsing gateway definition '{self.definition_filepath}' failed: {e}")
+
+        self.constants = {}
+        if 'constants' in gateway_definition:
+            self.constants = gateway_definition['constants']
+            if 'includes' in self.constants:
+                basic_definition = deepcopy(self.constants)
+                for incl in self.constants['includes']:
+                    self.constants.update(self.includes[incl['file']])
+                self.constants.update(basic_definition)
 
         if 'route' not in gateway_definition:
-            ll.error(f"Gateway definition does not include a 'route'")
-            return
+            raise InternalError(f"Gateway definition does not include a 'route'")
         self.route_definition = AGWRouteDefinition(**gateway_definition['route'])
 
         self.request_definitions = []
         if 'requests' in gateway_definition:
             for req in gateway_definition['requests']:
+                if 'includes' in req:
+                    for incl in req['includes']:
+                        self._include(incl)
                 self.request_definitions.append(AGWRequestDefinition(**req))
 
         if 'response' not in gateway_definition:
-            ll.error(f"Gateway definition does not include a 'response'")
-            return
+            raise InternalError(f"Gateway definition does not include a 'response'")
         self.response_definition = AGWResponseDefinition(**gateway_definition['response'])
 
         self.after_hooks = None
         if 'after_hooks' in gateway_definition:
             self.after_hooks = gateway_definition['after_hooks']
 
+    def _include(self, incl):
+        if not isinstance(incl, dict):
+            raise InternalError("Include definition should be a dict")
+        if not self.includes or 'file' not in incl:
+            raise InternalError("Include definition does not include a 'file'")
+        incl['include'] = deepcopy(self.includes[incl['file']])
+
     def get_routes(self):
         plugins = self.__get_plugins()
         plugins.insert(0, ServiceExceptionHandlerPlugin())
-        plugins.insert(0, GatewayRequestEnvironmentPlugin(self.route_definition, self.after_hooks))
+        plugins.insert(0, GatewayRequestEnvironmentPlugin(self.constants, self.route_definition, self.after_hooks))
 
         # TODO: Plugin might want to add another route (at least cors)
 
@@ -75,14 +96,14 @@ class GatewayController(object):
 
     @timed
     def __handle_route(self, gre: GatewayRequestEnvironment, **kwargs):
-        for req_def in self.request_definitions:
+        for i, req_def in enumerate(self.request_definitions):
             agw_req = AGWRequest(req_def)
             gre.evaluate_and_add_request(agw_req)
 
             # Run builders
             if agw_req.builders:
                 for builder_definition in agw_req.builders:
-                    get_builder(builder_definition).run(gre)
+                    get_builder(builder_definition).run(gre, self_key=f"requests[{i}]")
 
             ll.debug(f"Requesting with: {agw_req}")
 
@@ -98,8 +119,8 @@ class GatewayController(object):
                 status=req.status_code,
                 headers=deepcopy(req.headers),
                 text=req.text,
-                data=parse_qs(req.text) if req.headers['Content-Type'] == "application/x-www-form-urlencoded" else None,
-                json=req.json() if req.headers['Content-Type'] == "application/json" else None
+                data=parse_qs(req.text) if "application/x-www-form-urlencoded" in req.headers['Content-Type'] else None,
+                json=req.json() if "application/json" in req.headers['Content-Type'] else None
             )
 
             ll.verbose(f"Got response: {agw_req.response}")
@@ -107,7 +128,7 @@ class GatewayController(object):
             # Run processors
             if agw_req.processors:
                 for processor_definition in agw_req.processors:
-                    get_processor(processor_definition).run(gre, agw_req)
+                    get_processor(processor_definition).run(gre, self_key=f"requests[{i}]")
 
         agw_resp = AGWResponse(self.response_definition)
         gre.evaluate_and_add_response(agw_resp)
@@ -115,7 +136,7 @@ class GatewayController(object):
         # Run generators
         if agw_resp.generators:
             for generator_definition in agw_resp.generators:
-                get_generator(generator_definition).run(gre)
+                get_generator(generator_definition).run(gre, self_key=f"response")
 
         response.status = agw_resp.status
         response.headers.update(agw_resp.headers)

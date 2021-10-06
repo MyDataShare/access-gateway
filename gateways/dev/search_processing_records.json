@@ -1,0 +1,70 @@
+{
+    "constants": {
+        "includes": [
+            { "file": "environments.json" }
+        ],
+        "payloads": {
+            "expiring": {
+                "status": [ "active", "declined", "pending", "revoked" ],
+                "order_by": "expires"
+            }
+        }
+    },
+    "route": {
+        "path": "/search_processing_records",
+        "method": "POST"
+    },
+    "requests": [
+        {
+            "includes": [
+                {
+                    "file": "client_credentials_grant.json",
+                    "arguments": {
+                        "idp": "${constants.environments[route.json.environment].idp}",
+                        "basic_token": "${route.json.basic_token}",
+                        "scope": "${route.json.scope}"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "search_processing_records",
+            "url": "${constants.environments[route.json.environment].mop}/admin/v2.0/processing_records",
+            "method": "POST",
+            "headers": {
+                "Authorization": "Bearer ${requests_by_name['client_credentials_grant'].response.json.access_token}",
+                "Content-Type": "application/json"
+            },
+            "builders": [
+                {
+                    "builder": "builders.copy",
+                    "if": "route.json.predefined_payload",
+                    "from": "constants.payloads[route.json.predefined_payload]",
+                    "to": "self.json"
+                },
+                {
+                    "builder": "builders.copy",
+                    "if": "route.json.payload",
+                    "from": "route.json.payload",
+                    "to": "self.json"
+                }
+            ]
+        }
+    ],
+    "response": {
+        "status": 200,
+        "headers": {
+            "content_type": "application/json"
+        },
+        "json": {
+            "admin_token": "${requests_by_name['client_credentials_grant'].response.json.access_token}"
+        },
+        "generators": [
+            {
+                "generator": "generators.copy",
+                "from": "requests_by_name['search_processing_records'].response.json",
+                "to": "self.json.processing_records"
+            }
+        ]
+    }
+}
