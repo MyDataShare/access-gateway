@@ -2,7 +2,7 @@
 
 Access Gateway (hereafter, for brevity: AGW) is a general purpose extendable API gateway developed originally for MyDataShare to shield and protect the data providing services but is not limited to be used within the MyDataShare ecosystem. However, most of this document focuses on using MyDataShare Access Gateway as part of MyDataShare ecosystem.
 
-The main feature of AGW is to help customers easily protect their data provider services. AGW acts as a shield atop the data provider service and introspects inbound requests for validity.
+The main feature of AGW is to help ecosystem members to easily protect their data provider services. AGW acts as a shield atop the data provider service and introspects inbound requests for validity.
 
 Please refer to ([MyDataShare Developer Guide](https://kampanja.vastuugroup.fi/hubfs/developer-guide.pdf) and [MyDataShare API Reference](https://app.swaggerhub.com/apis/MyDataShare2/MyDataShare/)) for additional information about the product.
 
@@ -95,7 +95,7 @@ The sequence consists of the following steps:
 2. Data consumer obtains a request_ticket with which it shall perform the actual data request. If a request_ticket cannot be granted (e.g. the consumer has no permission to the processing record), the sequence ends here.
 3. Data consumer performs the data request, providing both the request_ticket as well as all the parameters needed for the actual data request.
 	- AGW introspects the request_ticket using MDS backend.
-	- MDS backend generates a request log entry for the introspection result.
+	- MDS backend generates a request log entry for the introspection result (whether the processing record is valid and whether the data subject has granted the required permission).
 	- If the introspection returns anything else than a granted permission, the sequence ends here.
 4. AGW executes the request to the data provider on behalf of the data consumer.
    - AGW generates the request to the data provider
@@ -105,8 +105,9 @@ The sequence consists of the following steps:
    - AGW generates the response to the data consumer
    - AGW patches the log entry in the MDS's log to contain the status the the response
    - AGW sends the response to data consumer
+6. AGW updates the event log with the result of the data request
 
-AGW can use multiple data providers and aggregate the data consumer response from their responses.
+AGW can use multiple data providers as well as multiple requests, and aggregate the data consumer response from their responses.
 
 ### Access gateway configuration
 
@@ -224,6 +225,97 @@ Builders and generators may utilize copy, set and delete primitives to create co
 { "builder": "set", "headers.bar", "176-671" },
 ...
 ```
+
+#### Constants and included content
+
+The gateway definition may utilize constants to avoid needlessly replicating literals in the definition.
+
+The constants may be either inlined JSON definitions in the gateway file or included from another file.
+
+The gateway definition may use included content also for request definition, with parameters passed from the gateway file.
+
+```
+...
+"requests": [
+    {
+        "includes": [
+            {
+                "file": "client_credentials_grant.json",
+                "arguments": {
+                    "idp": "${constants.environments[route.json.environment].idp}",
+                    "basic_token": "${route.json.basic_token}",
+                    "scope": "${route.json.scope}"
+                }
+            }
+        ]
+    },
+...
+```
+
+#### Request naming
+
+The gateway definition may name individual requests, and refer to them by name in subsequent requests as well as response generation. This avoids referring to the requests by index, which would be fragile as the request sequence evolves.
+
+```
+...
+"requests": [
+    {
+        "name": "search_processing_records",
+        "url": "${constants.environments[route.json.environment].mop}/admin/v2.0/processing_records",
+
+...
+"response": {
+    "status": 200,
+    "generators": [
+        {
+            "generator": "generators.copy",
+            "from": "requests_by_name['search_processing_records'].response.json",
+
+...
+```
+
+#### Using self as a shortcut
+
+The gateway definition may use self-shortcut to explicitly state to which request's field a given operation is applied to.
+
+```
+...
+"generators": [
+    {
+        "generator": "generators.copy",
+        "from": "requests_by_name['search_processing_records'].response.json",
+        "to": "self.json.processing_records"
+    }
+]
+...
+```
+
+#### Using conditionals
+
+The gateway definition provides initial support for conditional actions. Currently the only supported clause is "is_defined", thus comparisons to values or fallback actions are not possible within the gateway definition. However, developing a plugin unleashes the full power of python and installable libraries.
+
+```
+...
+"builders": [
+    {
+        "builder": "builders.copy",
+        "if": "route.json.predefined_payload",
+        "from": "constants.payloads[route.json.predefined_payload]",
+        "to": "self.json"
+    },
+...
+```
+
+#### Variables
+
+The gateway definition provides support for using variables in actions. The syntax is simple, as shown in the attached example: the variable is bracketed. 
+
+```
+...
+"url": "${constants.environments[route.json.environment].mop}/admin/v2.0/processing_records",
+...
+```
+
 
 ### Data providers
 
