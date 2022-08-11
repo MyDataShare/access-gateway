@@ -14,6 +14,7 @@ from gateway_request_environment_plugin import GatewayRequestEnvironment
 from util import walk_dir
 
 ll: mds_logging.MdsLogger = logging.getLogger("agw")
+HEALTHCHECK_PATH = '/healthcheck'
 
 
 class AGW:
@@ -27,6 +28,7 @@ class AGW:
         self.includes = {}
 
         self.initialize_bottle()
+        self.initializa_healtcheck_endpoint()
         self.read_includes()
         self.initialize_routes()
 
@@ -69,6 +71,14 @@ class AGW:
                     ll.info(f"  * Adding route: {route['method']} {route['path']}")
                     self.app.route(**route)
 
+    def initializa_healtcheck_endpoint(self):
+        ll.info(f"Initializing healthcheck endpoint: {HEALTHCHECK_PATH}")
+        self.app.route(path=HEALTHCHECK_PATH, method='GET', callback=AGW._healthcheck)
+
+    @staticmethod
+    def _healthcheck():
+        return {'status': 'OK'}
+
 
 # Hook callbacks for bottle
 
@@ -81,13 +91,15 @@ def before_request():
 
     bottle.request.environ['request_time'] = time.time()
     bottle.request.environ['request_id'] = request_id
-    ll.request("+++++++++++++++ REQUEST START: %s|%s|%s|%s|%s" % (
-        bottle.request.environ.get('REQUEST_METHOD', ''),
-        bottle.request.environ.get('RAW_URI', ''),
-        bottle.request.environ.get('REMOTE_ADDR', ''),
-        bottle.request.environ.get('HTTP_USER_AGENT', ''),
-        bottle.request.environ.get('HTTP_X_FORWARDED_FOR', ''),
-    ))
+
+    if bottle.request.path != HEALTHCHECK_PATH:
+        ll.request("+++++++++++++++ REQUEST START: %s|%s|%s|%s|%s" % (
+            bottle.request.environ.get('REQUEST_METHOD', ''),
+            bottle.request.environ.get('RAW_URI', ''),
+            bottle.request.environ.get('REMOTE_ADDR', ''),
+            bottle.request.environ.get('HTTP_USER_AGENT', ''),
+            bottle.request.environ.get('HTTP_X_FORWARDED_FOR', ''),
+        ))
 
     bottle.response.headers.update({
         'X-Request-Id': request_id,
@@ -109,4 +121,5 @@ def after_request():
                 get_after_hook(after_hook_definition).run(gre)
 
     elapsed = time.time() - bottle.request.environ['request_time']
-    ll.request(f"--------------- REQUEST END (request: {elapsed:.3f}s)")
+    if bottle.request.path != HEALTHCHECK_PATH:
+        ll.request(f"--------------- REQUEST END (request: {elapsed:.3f}s)")
