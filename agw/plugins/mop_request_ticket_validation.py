@@ -13,6 +13,77 @@ from settings import get_required_setting
 ll = getLogger("agw." + __name__)
 
 
+"""
+Request ticket introspection response:
+    "identifiers": [
+        {
+            "id": "170677-924F",
+            "id_type": "ssn",
+            "country": "FIN",
+            "id_source": "Signicat_FTN",
+            "first_name": "Helmi Aurora",
+            "last_name": "Nieminen"
+            "verified_at": "2021-01-29T10:18:07.436398+00:00"
+        },
+        {
+            "id": "plii-plaa",
+            "id_type": "ssn",
+            "country": "SWE",
+            "id_source": "Signicat_FTN",
+            "first_name": "Svantte Gubbar",
+            "last_name": "Svensson"
+            "verified_at": "2022-01-29T10:18:07.436398+00:00"
+        },
+        {
+            "id": "asdasd",
+            "id_type": "pairwise",
+            ...
+        },
+        {
+            "id": "test@test.com",
+            "id_type": "email",
+            ...
+        },
+        {
+            "id": "test_2@test_2.com",
+            "id_type": "email",
+            ...
+        }
+    ]
+
+Route Extra output:
+    "mop_request_ticket": {
+        "access_item_uuid": "asd-123",
+        "agw_token": "qwe-ert",
+        "identifiers": {
+            "ssn" : {
+                "FIN": { "id": "170677-924F", "id_type": "ssn", "country": "FIN", ... }
+                "SWE": { "id": "plii-plaa", "id_type": "ssn", "country": "SWE", ... }
+            },
+            "pairwise": { "id": "asdasd", "id_type": "pairwise", ... },
+            "email": [
+                { "id": "test@test.com", "id_type": "email", ... },
+                { "id": "test_2@test_2.com", "id_type": "email", ... },
+            ]
+        },
+        "claims": {
+            "mop_processing_record_uuid": "mnb-zxc",
+            ...(all claims)...
+        }
+    }
+
+Using from gateway definition json:
+    ${route.extra.mop_request_ticket.access_item_uuid} -> "asd-123
+    ${route.extra.mop_request_ticket.identifiers.ssn.FIN.id} -> 170677-924F
+    ${route.extra.mop_request_ticket.identifiers.ssn.FIN.first_name} -> Helmi Aurora
+    ${route.extra.mop_request_ticket.identifiers.pairwise.id} -> asdasd
+    ${route.extra.mop_request_ticket.identifiers.ssn.SWE.id} -> plii-plaa
+    ${route.extra.mop_request_ticket.identifiers.email[0].id} -> test@test.com
+    ${route.extra.mop_request_ticket.claims.mop_processing_record_uuid} -> mnb-zxc
+
+"""
+
+
 def get_setting(key: str) -> str:
     return get_required_setting(f'MOP_REQUEST_TICKET_VALIDATION_{key}')
 
@@ -116,11 +187,12 @@ class MopRequestTicketValidationPlugin:
 
         return headers['MyDataShare-Request-Ticket']
 
-    def _generate_route_extra(self, json_response: Dict):
+    def _generate_route_extra(self, json_response: Dict, claims: Dict):
         cls = self.__class__
         ret = {
             'access_item_uuid': json_response['access_item_uuid'],
             'agw_token': cls._AGW_TOKEN,
+            'claims': claims
         }
         if 'identifiers' in json_response:
             ret['identifiers'] = {}
@@ -137,23 +209,23 @@ class MopRequestTicketValidationPlugin:
                     if country in ret['identifiers']['ssn']:
                         ll.warning(f"Multiple {country}-ssn pairs detected. Only picking the first one.")
                         continue
-                    ret['identifiers']['ssn'][country] = identifier['id']
+                    ret['identifiers']['ssn'][country] = identifier
 
                 elif identifier['id_type'] == 'email':
                     if 'email' not in ret['identifiers']:
                         ret['identifiers']['email'] = []
-                    ret['identifiers']['email'].append(identifier['id'])
+                    ret['identifiers']['email'].append(identifier)
 
                 elif identifier['id_type'] == 'pairwise':
                     if 'pairwise' in ret['identifiers']:
                         ll.warning(f"Multiple pairwises detected. Only picking the first one.")
                         continue
-                    ret['identifiers']['pairwise'] = identifier['id']
+                    ret['identifiers']['pairwise'] = identifier
 
                 elif identifier['id_type'] == 'phone_number':
                     if 'phone_number' not in ret['identifiers']:
                         ret['identifiers']['phone_number'] = []
-                    ret['identifiers']['phone_number'].append(identifier['id'])
+                    ret['identifiers']['phone_number'].append(identifier)
 
         return ret
 
@@ -212,7 +284,7 @@ class MopRequestTicketValidationPlugin:
             raise ForbiddenError(f"Wrong audience. Expecting '{aud}' but got '{claims['aud']}'.")
 
     @timed
-    def _introspect_request_ticket(self, request_ticket: str, gre: GatewayRequestEnvironment):
+    def _introspect_request_ticket(self, request_ticket: str, gre: GatewayRequestEnvironment, claims: Dict):
         """
         Introspects the request ticket with MOP
 
@@ -250,7 +322,7 @@ class MopRequestTicketValidationPlugin:
                     raise BadRequestError(err)
                 else:
                     if 'access_item_uuid' in json_response:
-                        gre.route.extra['mop_request_ticket_validation'] = self._generate_route_extra(json_response)
+                        gre.route.extra['mop_request_ticket'] = self._generate_route_extra(json_response, claims)
                     else:
                         ll.warning("access_item_uuid missing from introspection response")
                     return
@@ -281,7 +353,7 @@ class MopRequestTicketValidationPlugin:
         if cls._ISS != claims['iss']:
             raise AuthorizationError(f"Bad issuer. Expected '{cls._ISS}' but got '{claims['iss']}'")
         self._verify_route(claims, gre)
-        self._introspect_request_ticket(request_ticket, gre)
+        self._introspect_request_ticket(request_ticket, gre, claims)
 
 
 AGW_PLUGIN_CLASS = MopRequestTicketValidationPlugin

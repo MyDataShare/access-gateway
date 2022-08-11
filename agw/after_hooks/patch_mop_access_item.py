@@ -23,11 +23,11 @@ class PatchMopAccessItem:
     def run(self, gre: GatewayRequestEnvironment) -> None:
         cls = self.__class__
 
-        if 'mop_request_ticket_validation' not in gre.route.extra:
+        if 'mop_request_ticket' not in gre.route.extra:
             return
-        info = gre.route.extra['mop_request_ticket_validation']
+        info = gre.route.extra['mop_request_ticket']
         if 'access_item_uuid' not in info or 'agw_token' not in info:
-            raise InternalError("Badly formed 'mop_request_ticket_validation' in GatewayRequestEnvironment "
+            raise InternalError("Badly formed 'mop_request_ticket' in GatewayRequestEnvironment "
                                 "'route.extra'")
 
         access_item_uuid = info['access_item_uuid']
