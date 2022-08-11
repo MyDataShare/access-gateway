@@ -26,6 +26,7 @@ services:
             dockerfile: ./tests/api/Dockerfile
         environment:
             AGW: ${AGW:-http://agw_apitest:8199}
+            COLUMNS: 120
         command: ["./extras/wait-for-it.sh", "agw_apitest:8199", "--strict", "--timeout=10", "--", "pytest", "-rfxXs", "./tests/api/tests"]
         depends_on:
             - agw_apitest

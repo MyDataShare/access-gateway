@@ -1,4 +1,4 @@
-version: "3.0"
+version: "3.5"
 
 services:
 
@@ -10,6 +10,7 @@ services:
             - .env
         environment:
             AGW_GATEWAYS_SEARCH_PATH: ${AGW_GATEWAYS_SEARCH_PATH}
+            AGW_INCLUDES_SEARCH_PATH: ${AGW_INCLUDES_SEARCH_PATH}
             MOCK_DP_ROUTES: ${MOCK_DP_ROUTES}
         ports:
             - 8199:8199 # nginx
