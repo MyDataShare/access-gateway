@@ -36,7 +36,7 @@
             "builders": [
                 {
                     "builder": "builders.copy",
-                    "from": "route.extra.mop_request_ticket_validation.identifiers",
+                    "from": "route.extra.mop_request_ticket.identifiers",
                     "to": "requests[2].json.identifiers"
                 }
             ],
@@ -44,8 +44,9 @@
             "method": "POST",
             "json": {
                 "test": "test1",
-                "FIN_ssn": "${route.extra.mop_request_ticket_validation.identifiers.ssn.FIN}",
-                "email": "${route.extra.mop_request_ticket_validation.identifiers.email[0]}"
+                "FIN_ssn_id": "${route.extra.mop_request_ticket.identifiers.ssn.FIN.id}",
+                "email": "${route.extra.mop_request_ticket.identifiers.email[0].id}",
+                "pr_uuid": "${route.extra.mop_request_ticket.claims.mop_processing_record_uuid}"
             },
             "processors": [
                 { "processor": "processors.xml_to_json" }
@@ -60,7 +61,8 @@
         "json": {
             "foo": "bar ${requests[0].response.json.laalaa}",
             "allow": "${requests[0].response.headers.Access-Control-Allow-Headers}",
-            "foobar": "resp1 ${requests[1].response.json.foobar}"
+            "foobar": "resp1 ${requests[1].response.json.foobar}",
+            "AGW_LOGGING_LEVEL": "${environment.AGW_LOGGING_LEVEL}"
         },
         "generators": [
             {
@@ -71,6 +73,11 @@
             {
                 "generator": "generators.copy",
                 "from": "requests[0].response.json", "to": "response.json.from_copy"
+            },
+            {
+                "generator": "generators.copy",
+                "note": "This is just a sample and a bad idea. You should be very carefull when passing identifiers",
+                "from": "route.extra.mop_request_ticket.identifiers", "to": "response.json.identifiers"
             },
             {
                 "generator": "generators.delete",
