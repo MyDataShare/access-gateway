@@ -1,0 +1,23 @@
+version: "3.0"
+
+services:
+
+    agw_apitest:
+        image: $IMAGE
+        env_file:
+            - .env.example
+        environment:
+            AGW_GATEWAYS_SEARCH_PATH: gateways/api_test
+            AGW_INCLUDES_SEARCH_PATH: gateways/includes
+            MOCK_DP_ROUTES: mock/api_test.json
+
+    apitest:
+        build:
+            context: ./
+            dockerfile: ./tests/api/Dockerfile
+        environment:
+            AGW: ${AGW:-http://agw_apitest:8199}
+            COLUMNS: 120
+        command: ["./extras/wait-for-it.sh", "agw_apitest:8199", "--strict", "--timeout=10", "--", "pytest", "-rfxXs", "./tests/api/tests"]
+        depends_on:
+            - agw_apitest

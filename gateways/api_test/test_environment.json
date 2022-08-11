@@ -1,0 +1,15 @@
+{
+    "route": {
+        "path": "/test_environment",
+        "method": "GET"
+    },
+    "response": {
+        "status": 200,
+        "headers": {
+            "content_type": "application/json"
+        },
+        "json": {
+            "AGW_LOGGING_LEVEL": "${environment.AGW_LOGGING_LEVEL}"
+        }
+    }
+}
