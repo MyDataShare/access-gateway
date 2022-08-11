@@ -2,6 +2,7 @@ import numbers
 from typing import Optional, List, Any, Tuple, Dict, Union
 import re
 from copy import deepcopy
+from os import environ
 
 from bottle import request
 from requests.models import CaseInsensitiveDict
@@ -32,6 +33,7 @@ class GatewayRequestEnvironment:
         self.response = response
         self.after_hooks = after_hooks
         self.error = error
+        self.environment = deepcopy(dict(environ))
 
         self.requests_by_name: Dict[str, AGWRequest] = {}
 
