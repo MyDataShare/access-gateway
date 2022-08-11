@@ -3,14 +3,14 @@ from os import environ
 required_run_env_vars = [
     'AGW',
     'MDS',
-    'IDPMOCK',
+    'MOCKIDP',
 ]
 
 run_env_vars = {
     "test": {
         "AGW": "http://localhost:8199",
         "MDS": "http://localhost:8099",
-        "IDPMOCK": "http://localhost:19090",
+        "MOCKIDP": "http://localhost:19090",
     }
 }
 

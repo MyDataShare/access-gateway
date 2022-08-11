@@ -15,7 +15,7 @@ def create_basic_token(client_id, client_secret):
 
 def auth(payload, token):
     v = get_run_env_vars()
-    url = v['IDPMOCK'] + '/oxauth/restv1/token'
+    url = v['MOCKIDP'] + '/oxauth/restv1/token'
 
     headers = {
         'Content-Type': 'application/x-www-form-urlencoded',

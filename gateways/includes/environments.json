@@ -1,7 +1,7 @@
 {
     "environments": {
         "dev": {
-            "idp": "http://idpmock:19090",
+            "idp": "http://mockidp:19090",
             "mop": "http://mydatashare:8071"
         },
         "alpha": {
