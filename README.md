@@ -294,6 +294,8 @@ The gateway definition may use self-shortcut to explicitly state to which reques
 
 The gateway definition provides initial support for conditional actions. Currently the only supported clause is "is_defined", thus comparisons to values or fallback actions are not possible within the gateway definition. However, developing a plugin unleashes the full power of python and installable libraries.
 
+Any plugins you create should be save under the agw/ folder for the gateway configuration to be able to access it.
+
 ```
 ...
 "builders": [
@@ -316,10 +318,52 @@ The gateway definition provides support for using variables in actions. The synt
 ...
 ```
 
+#### The MyDataShare request ticket dictionary
+
+The MyDataShare request ticket plugin creates a dictionary with various information retrieved from the introspection.
+
+Here is an example how this infomation is structured. The contents depends on what data the data provider orgnization is allowed to access.
+```
+{
+    "access_item_uuid": "asd-123",
+    "agw_token": "qwe-ert",
+    "identifiers": {
+        "ssn" : {
+            "FIN": { "id": "170677-924F", "id_type": "ssn", "country": "FIN", "first_name": "Helmi Aurora" ... }
+            "SWE": { "id": "plii-plaa", "id_type": "ssn", "country": "SWE", ... }
+        },
+        "pairwise": { "id": "asdasd", "id_type": "pairwise", ... },
+        "email": [
+            { "id": "test@test.com", "id_type": "email", ... },
+            { "id": "test_2@test_2.com", "id_type": "email", ... },
+        ]
+    },
+    "claims": {
+        "mop_processing_record_uuid": "mnb-zxc",
+        ...(all claims)...
+    }
+}
+```
+
+Fetching this info from gateway definition json:
+```
+# a uuid to the access item to log this action
+${route.extra.mop_request_ticket.access_item_uuid} -> "asd-123"
+
+# identifiers and data connected to them
+${route.extra.mop_request_ticket.identifiers.ssn.FIN.id} -> "170677-924F"
+${route.extra.mop_request_ticket.identifiers.ssn.FIN.first_name} -> "Helmi Aurora"
+${route.extra.mop_request_ticket.identifiers.pairwise.id} -> asdasd
+${route.extra.mop_request_ticket.identifiers.ssn.SWE.id} -> plii-plaa
+${route.extra.mop_request_ticket.identifiers.email[0].id} -> test@test.com
+
+# other claims
+${route.extra.mop_request_ticket.claims.mop_processing_record_uuid} -> mnb-zxc
+```
 
 ### Data providers
 
-As noted, an AGW is located atop a data provider.
+As noted, an AGW is located atop of a data provider.
 
 For convenience's sake, a simple ready-to-use data provider is available with the AGW, in `agw/mock`-directory.
 
